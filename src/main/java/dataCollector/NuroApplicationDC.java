@@ -1,4 +1,4 @@
-package it.seaclouds.NURO_dc;
+package dataCollector;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -19,8 +19,8 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 
-import Config.Configuration;
-import Exception.ConfigurationException;
+import config.Configuration;
+import exception.ConfigurationException;
 import it.polimi.tower4clouds.data_collector_library.DCAgent;
 import it.polimi.tower4clouds.manager.api.ManagerAPI;
 import it.polimi.tower4clouds.model.data_collectors.DCDescriptor;

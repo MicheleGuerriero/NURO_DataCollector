@@ -1,6 +1,6 @@
-package Config;
+package config;
 
-import Exception.ConfigurationException;
+import exception.ConfigurationException;
 
 
 public class Configuration {

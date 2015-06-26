@@ -1,4 +1,4 @@
-package it.seaclouds.NURO_dc;
+package dataCollector;
 
 import it.polimi.tower4clouds.data_collector_library.DCAgent;
 import it.polimi.tower4clouds.manager.api.ManagerAPI;
@@ -19,7 +19,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 
-import Exception.ConfigurationException;
+import exception.ConfigurationException;
 
 /**
  * Hello world!
