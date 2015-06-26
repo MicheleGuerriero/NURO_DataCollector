@@ -34,22 +34,11 @@ import it.polimi.tower4clouds.model.ontology.VM;
 
 public class NuroApplicationDC implements Observer {
 
+	private static final int TEN_SECONDS = 10;
+	private static final int MINUTE = 60;
+
 	public void startMonitor() throws ConfigurationException {
-		
-		/*
-		DCAgent dcAgent = new DCAgent(new ManagerAPI("192.168.100.10", 8170));
-		dcAgent.addObserver(this);
-		InternalComponent target = new InternalComponent("Frontend","NuroApplicationFrontend");
-		dCDescriptor.addResource(target);
-		dCDescriptor.addMonitoredResource("AverageLastTenSecondsResponseTime",
-				target);
-		dCDescriptor.setConfigSyncPeriod(10);
-		dCDescriptor.setKeepAlive(25);
-		dcAgent.setDCDescriptor(dCDescriptor);
-		dcAgent.addObserver(this);
-		dcAgent.start();
-		*/
-		DCDescriptor dCDescriptor = new DCDescriptor();
+
 		Configuration config = Configuration.getInstance();
 		DCAgent dcAgent = new DCAgent(new ManagerAPI(config.getMmIP(),
 				config.getMmPort()));
@@ -68,7 +57,7 @@ public class NuroApplicationDC implements Observer {
 		dcAgent.setDCDescriptor(dcDescriptor);
 		dcAgent.addObserver(this);
 		dcAgent.start();
-		
+
 		try {
 			Thread.sleep(5000);
 		} catch (InterruptedException e1) {
@@ -98,23 +87,25 @@ public class NuroApplicationDC implements Observer {
 				while ((line = reader.readLine()) != null) {
 					out.append(line);
 				}
+				reader.close();
 
 				ObjectMapper mapper = new ObjectMapper();
 				JsonNode actualObj = mapper.readTree(out.toString());
-				System.out
-						.println("Average requests' run time in the last 10 seconds "
-								+ actualObj.get("request_analytics")
-										.get("10seconds").get("avg_run_time"));
-				reader.close();
-				String value=actualObj.get("request_analytics")
-						.get("10seconds").get("avg_run_time")
-						.toString();
-				Double toSend=Double.parseDouble(value.substring(1, value.length()-1));
-				dcAgent.send(
-						new InternalComponent(Configuration.getInstance().getInternalComponentType(),
-								Configuration.getInstance().getInternalComponentId()),
-						"AverageLastTenSecondsResponseTime",
-						toSend);
+
+				for (String metric : getApplicationMetrics()) {
+					if (dcAgent.shouldMonitor(new InternalComponent(
+							Configuration.getInstance()
+									.getInternalComponentType(), Configuration
+									.getInstance().getInternalComponentId()),
+							metric)) {
+						dcAgent.send(new InternalComponent(Configuration
+								.getInstance().getInternalComponentType(),
+								Configuration.getInstance()
+										.getInternalComponentId()), metric,
+								getMetricValue(metric, actualObj));
+					}
+				}
+
 				Thread.sleep(5000);
 			} catch (ClientProtocolException e) {
 				// TODO Auto-generated catch block
@@ -130,11 +121,6 @@ public class NuroApplicationDC implements Observer {
 
 	}
 
-	public void update(Observable arg0, Object arg1) {
-		// TODO Auto-generated method stub
-
-	}
-	
 	private static Set<Resource> buildRelatedResources(Configuration config) {
 		Set<Resource> relatedResources = new HashSet<Resource>();
 		if (config.getCloudProviderId() != null) {
@@ -178,14 +164,71 @@ public class NuroApplicationDC implements Observer {
 			internalComponent.addRequiredComponent(config.getVmId());
 		return internalComponent;
 	}
-	
+
 	private static Set<String> getApplicationMetrics() {
 		// TODO return a set with all the application level metrics provided by
 		// this dc (case sensitive)
 		Set<String> metrics = new HashSet<String>();
-		metrics.add("AverageLastTenSecondsResponseTime");
+		metrics.add("NUROServerAverageLastTenSecondsRunTime");
+		metrics.add("NUROServerAverageLastMinuteRunTime");
+		metrics.add("NUROServerLastTenSecondsPlayerCount");
+		metrics.add("NUROServerMinutePlayerCount");
+		metrics.add("NUROServerLastTenSecondsRequestCount");
+		metrics.add("NUROServerMinuteRequestCount");
+		metrics.add("NUROServerLastTenSecondsThroughput");
+		metrics.add("NUROServerLastMinuteThroughput");
 
 		return metrics;
+	}
+
+	private static Object getMetricValue(String metric, JsonNode actualObj) {
+
+		String value;
+
+		switch (metric) {
+		case "NUROServerAverageLastTenSecondsRunTime":
+			value = actualObj.get("request_analytics").get("10seconds")
+					.get("avg_run_time").toString();
+			return Double.parseDouble(value.substring(1, value.length() - 1));
+		case "NUROServerAverageLastMinuteRunTime":
+			value = actualObj.get("request_analytics").get("minute")
+					.get("avg_run_time").toString();
+			return Double.parseDouble(value.substring(1, value.length() - 1));
+		case "NUROServerLastTenSecondsPlayerCount":
+			value = actualObj.get("request_analytics").get("10seconds")
+					.get("player_count").toString();
+			return Double.parseDouble(value.substring(1, value.length() - 1));
+		case "NUROServerMinutePlayerCount":
+			value = actualObj.get("request_analytics").get("minute")
+					.get("player_count").toString();
+			return Double.parseDouble(value.substring(1, value.length() - 1));
+		case "NUROServerLastTenSecondsRequestCount":
+			value = actualObj.get("request_analytics").get("10seconds")
+					.get("request_count").toString();
+			return Double.parseDouble(value.substring(1, value.length() - 1));
+		case "NUROServerMinuteRequestCount":
+			value = actualObj.get("request_analytics").get("minute")
+					.get("request_count").toString();
+			return Double.parseDouble(value.substring(1, value.length() - 1));
+		case "NUROServerLastTenSecondsThroughput":
+			value = actualObj.get("request_analytics").get("10seconds")
+					.get("request_count").toString();
+			return Double.parseDouble(value.substring(1, value.length() - 1))
+					/ TEN_SECONDS;
+		case "NUROServerLastMinuteThroughput":
+			value = actualObj.get("request_analytics").get("minute")
+					.get("request_count").toString();
+			return Double.parseDouble(value.substring(1, value.length() - 1))
+					/ MINUTE;
+
+		}
+
+		return null;
+	}
+
+	public void update(Observable arg0, Object arg1) {
+		// TODO Auto-generated method stub
+
 	}
 
 }
