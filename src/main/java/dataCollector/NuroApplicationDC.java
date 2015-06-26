@@ -9,6 +9,7 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
 
+import org.antlr.v4.parse.ANTLRParser.throwsSpec_return;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -21,6 +22,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 
 import config.Configuration;
 import exception.ConfigurationException;
+import exception.MetricNotAvailableException;
 import it.polimi.tower4clouds.data_collector_library.DCAgent;
 import it.polimi.tower4clouds.manager.api.ManagerAPI;
 import it.polimi.tower4clouds.model.data_collectors.DCDescriptor;
@@ -98,6 +100,7 @@ public class NuroApplicationDC implements Observer {
 									.getInternalComponentType(), Configuration
 									.getInstance().getInternalComponentId()),
 							metric)) {
+						System.out.println("sending value "+getMetricValue(metric, actualObj)+" for metric "+metric);
 						dcAgent.send(new InternalComponent(Configuration
 								.getInstance().getInternalComponentType(),
 								Configuration.getInstance()
@@ -114,6 +117,9 @@ public class NuroApplicationDC implements Observer {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (MetricNotAvailableException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
@@ -169,61 +175,62 @@ public class NuroApplicationDC implements Observer {
 		// TODO return a set with all the application level metrics provided by
 		// this dc (case sensitive)
 		Set<String> metrics = new HashSet<String>();
-		metrics.add("NUROServerAverageLastTenSecondsRunTime");
-		metrics.add("NUROServerAverageLastMinuteRunTime");
+		metrics.add("NUROServerLastTenSecondsAverageRunTime");
+		metrics.add("NUROServerLastMinuteAverageRunTime");
 		metrics.add("NUROServerLastTenSecondsPlayerCount");
-		metrics.add("NUROServerMinutePlayerCount");
+		metrics.add("NUROServerLastMinutePlayerCount");
 		metrics.add("NUROServerLastTenSecondsRequestCount");
-		metrics.add("NUROServerMinuteRequestCount");
-		metrics.add("NUROServerLastTenSecondsThroughput");
-		metrics.add("NUROServerLastMinuteThroughput");
+		metrics.add("NUROServerLastMinuteRequestCount");
+		metrics.add("NUROServerLastTenSecondsAverageThroughput");
+		metrics.add("NUROServerLastMinuteAverageThroughput");
 
 		return metrics;
 	}
 
-	private static Object getMetricValue(String metric, JsonNode actualObj) {
+	private static Object getMetricValue(String metric, JsonNode actualObj) throws MetricNotAvailableException {
 
 		String value;
+		System.out.println("start looking for the value of the metric: "+metric);
 
 		switch (metric) {
-		case "NUROServerAverageLastTenSecondsRunTime":
+		case "NUROServerLastTenSecondsAverageRunTime":
 			value = actualObj.get("request_analytics").get("10seconds")
 					.get("avg_run_time").toString();
 			return Double.parseDouble(value.substring(1, value.length() - 1));
-		case "NUROServerAverageLastMinuteRunTime":
+		case "NUROServerLastMinuteAverageRunTime":
 			value = actualObj.get("request_analytics").get("minute")
 					.get("avg_run_time").toString();
 			return Double.parseDouble(value.substring(1, value.length() - 1));
 		case "NUROServerLastTenSecondsPlayerCount":
 			value = actualObj.get("request_analytics").get("10seconds")
 					.get("player_count").toString();
-			return Double.parseDouble(value.substring(1, value.length() - 1));
-		case "NUROServerMinutePlayerCount":
+			return Integer.parseInt(value.substring(1, value.length() - 1));
+		case "NUROServerLastMinutePlayerCount":
 			value = actualObj.get("request_analytics").get("minute")
 					.get("player_count").toString();
-			return Double.parseDouble(value.substring(1, value.length() - 1));
+			return Integer.parseInt(value.substring(1, value.length() - 1));
 		case "NUROServerLastTenSecondsRequestCount":
 			value = actualObj.get("request_analytics").get("10seconds")
 					.get("request_count").toString();
-			return Double.parseDouble(value.substring(1, value.length() - 1));
-		case "NUROServerMinuteRequestCount":
+			return Integer.parseInt(value.substring(1, value.length() - 1));
+		case "NUROServerLastMinuteRequestCount":
 			value = actualObj.get("request_analytics").get("minute")
 					.get("request_count").toString();
-			return Double.parseDouble(value.substring(1, value.length() - 1));
-		case "NUROServerLastTenSecondsThroughput":
+			return Integer.parseInt(value.substring(1, value.length() - 1));
+		case "NUROServerLastTenSecondsAverageThroughput":
 			value = actualObj.get("request_analytics").get("10seconds")
 					.get("request_count").toString();
 			return Double.parseDouble(value.substring(1, value.length() - 1))
 					/ TEN_SECONDS;
-		case "NUROServerLastMinuteThroughput":
+		case "NUROServerLastMinuteAverageThroughput":
 			value = actualObj.get("request_analytics").get("minute")
 					.get("request_count").toString();
 			return Double.parseDouble(value.substring(1, value.length() - 1))
 					/ MINUTE;
+		default: throw new MetricNotAvailableException("the specified metric is not available from NURO sensors");
 
 		}
 
-		return null;
 	}
 
 	public void update(Observable arg0, Object arg1) {
