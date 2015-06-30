@@ -58,7 +58,7 @@ public class NuroApplicationDC implements Observer {
 		dcAgent.start();
 
 		try {
-			Thread.sleep(5000);
+			Thread.sleep(2000);
 		} catch (InterruptedException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
@@ -110,9 +110,10 @@ public class NuroApplicationDC implements Observer {
 										.getInternalComponentId()), metric,
 								getMetricValue(metric, actualObj));
 					}
+					Thread.sleep(Integer.parseInt(dcAgent.getParameters(metric).get("samplingTime"))*1000);
+
 				}
 
-				Thread.sleep(5000);
 			} catch (ClientProtocolException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
