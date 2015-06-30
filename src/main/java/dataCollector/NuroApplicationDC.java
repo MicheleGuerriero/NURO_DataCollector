@@ -8,8 +8,6 @@ import java.util.HashSet;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
-
-import org.antlr.v4.parse.ANTLRParser.throwsSpec_return;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -19,7 +17,6 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
-
 import config.Configuration;
 import exception.ConfigurationException;
 import exception.MetricNotAvailableException;
@@ -46,9 +43,9 @@ public class NuroApplicationDC implements Observer {
 				config.getMmPort()));
 		DCDescriptor dcDescriptor = new DCDescriptor();
 		if (config.getInternalComponentId() != null) {
+			dcDescriptor.addResource(buildInternalComponent(config));
 			dcDescriptor.addMonitoredResource(getApplicationMetrics(),
 					buildInternalComponent(config));
-			dcDescriptor.addResource(buildInternalComponent(config));
 		}
 		if (config.getVmId() != null) {
 			dcDescriptor.addResource(buildExternalComponent(config));
@@ -67,32 +64,14 @@ public class NuroApplicationDC implements Observer {
 			e1.printStackTrace();
 		}
 
-		String username = "seaclouds";
-		String password = "preview";
-		String auth = username + ":" + password;
-		String encodedAuth = Base64.encodeBase64String(auth.getBytes());
 
 		HttpClient httpClient = HttpClientBuilder.create().build();
-		HttpGet httpget = new HttpGet(
-				"http://seaclouds-dev.nurogames.com/nuro-casestudy/sensor.php");
-		httpget.addHeader("Authorization", "Basic " + encodedAuth);
+		String username;
+		String password;
+		String sensorUrl;	
 
 		while (true) {
 			try {
-				HttpResponse response = httpClient.execute(httpget);
-				HttpEntity responseEntity = response.getEntity();
-				InputStream stream = responseEntity.getContent();
-				BufferedReader reader = new BufferedReader(
-						new InputStreamReader(stream));
-				StringBuilder out = new StringBuilder();
-				String line;
-				while ((line = reader.readLine()) != null) {
-					out.append(line);
-				}
-				reader.close();
-
-				ObjectMapper mapper = new ObjectMapper();
-				JsonNode actualObj = mapper.readTree(out.toString());
 
 				for (String metric : getApplicationMetrics()) {
 					if (dcAgent.shouldMonitor(new InternalComponent(
@@ -100,6 +79,30 @@ public class NuroApplicationDC implements Observer {
 									.getInternalComponentType(), Configuration
 									.getInstance().getInternalComponentId()),
 							metric)) {
+						
+						username = dcAgent.getParameters(metric).get("userName");
+						password = dcAgent.getParameters(metric).get("password");
+						sensorUrl = dcAgent.getParameters(metric).get("sensorUrl");
+						String auth = username + ":" + password;
+						String encodedAuth = Base64.encodeBase64String(auth.getBytes());
+						HttpGet httpget = new HttpGet(
+								sensorUrl);
+						httpget.addHeader("Authorization", "Basic " + encodedAuth);
+						HttpResponse response = httpClient.execute(httpget);
+						HttpEntity responseEntity = response.getEntity();
+						InputStream stream = responseEntity.getContent();
+						BufferedReader reader = new BufferedReader(
+								new InputStreamReader(stream));
+						StringBuilder out = new StringBuilder();
+						String line;
+						while ((line = reader.readLine()) != null) {
+							out.append(line);
+						}
+						reader.close();
+
+						ObjectMapper mapper = new ObjectMapper();
+						JsonNode actualObj = mapper.readTree(out.toString());
+						
 						System.out.println("sending value "+getMetricValue(metric, actualObj)+" for metric "+metric);
 						dcAgent.send(new InternalComponent(Configuration
 								.getInstance().getInternalComponentType(),
