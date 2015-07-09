@@ -109,8 +109,9 @@ public class NuroApplicationDC implements Observer {
 								Configuration.getInstance()
 										.getInternalComponentId()), metric,
 								getMetricValue(metric, actualObj));
+						Thread.sleep(Integer.parseInt(dcAgent.getParameters(metric).get("samplingTime"))*1000);
+
 					}
-					Thread.sleep(Integer.parseInt(dcAgent.getParameters(metric).get("samplingTime"))*1000);
 
 				}
 
@@ -176,8 +177,7 @@ public class NuroApplicationDC implements Observer {
 	}
 
 	private static Set<String> getApplicationMetrics() {
-		// TODO return a set with all the application level metrics provided by
-		// this dc (case sensitive)
+
 		Set<String> metrics = new HashSet<String>();
 		metrics.add("NUROServerLastTenSecondsAverageRunTime");
 		metrics.add("NUROServerLastMinuteAverageRunTime");
