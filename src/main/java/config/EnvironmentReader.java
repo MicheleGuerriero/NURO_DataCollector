@@ -3,10 +3,10 @@ package config;
 import exception.ConfigurationException;
 
 
-public class Configuration {
+public class EnvironmentReader {
 	
 
-		private static Configuration _instance = null;
+		private static EnvironmentReader _instance = null;
 		private String mmIP;
 		private int mmPort;
 		private int dcSyncPeriod = 30;
@@ -22,13 +22,13 @@ public class Configuration {
 		private String internalComponentId;
 		private String internalComponentType;
 
-		public static Configuration getInstance() throws ConfigurationException {
+		public static EnvironmentReader getInstance() throws ConfigurationException {
 			if (_instance == null)
-				_instance = new Configuration();
+				_instance = new EnvironmentReader();
 			return _instance;
 		}
 
-		private Configuration() throws ConfigurationException {
+		private EnvironmentReader() throws ConfigurationException {
 			try {
 				mmIP = getMandatoryEnvVar(Environment.MODACLOUDS_TOWER4CLOUDS_MANAGER_IP);
 				String mmPortString = getMandatoryEnvVar(Environment.MODACLOUDS_TOWER4CLOUDS_MANAGER_PORT);
