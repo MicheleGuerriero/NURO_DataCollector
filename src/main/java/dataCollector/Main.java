@@ -13,7 +13,7 @@ public class Main
     {
     	NuroApplicationDC dc=new NuroApplicationDC();
 
-    	try {
+    	  try {
     		EnvironmentReader config = EnvironmentReader.getInstance();
 
 			dc.startMonitor(config);
