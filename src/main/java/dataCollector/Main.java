@@ -11,10 +11,10 @@ public class Main
 {
     public static void main( String[] args )
     {
-    	NuroApplicationDC dc=new NuroApplicationDC();
+          NuroApplicationDC dc=new NuroApplicationDC();
 
     	  try {
-    		EnvironmentReader config = EnvironmentReader.getInstance();
+    			EnvironmentReader config = EnvironmentReader.getInstance();
 
 			dc.startMonitor(config);
 		} catch (ConfigurationException e) {
